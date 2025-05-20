@@ -15,6 +15,7 @@ import BorrowedBooks from "./pages/BorrowedBooks";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import AdminPanel from "./pages/AdminPanel";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeProvider";
 
@@ -35,6 +36,26 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Admin route component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+  
+  // Check if user is admin (in a real app, this would be based on user role)
+  if (user.email !== "admin@example.com") {
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AppRoutes = () => {
   const { user } = useAuth();
   
@@ -49,6 +70,7 @@ const AppRoutes = () => {
       <Route path="/books/add" element={<ProtectedRoute><SidebarWrapper><AddBook /></SidebarWrapper></ProtectedRoute>} />
       <Route path="/books/borrowed" element={<ProtectedRoute><SidebarWrapper><BorrowedBooks /></SidebarWrapper></ProtectedRoute>} />
       <Route path="/books/:id" element={<ProtectedRoute><SidebarWrapper><BookDetail /></SidebarWrapper></ProtectedRoute>} />
+      <Route path="/admin" element={<AdminRoute><SidebarWrapper><AdminPanel /></SidebarWrapper></AdminRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

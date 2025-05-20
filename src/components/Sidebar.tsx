@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import { BookOpen, Book, BookPlus, BookType, BookCheck, LogOut, User, Calendar } from "lucide-react";
+import { BookOpen, Book, BookPlus, BookType, BookCheck, LogOut, User, Calendar, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,9 @@ const BookSidebar = () => {
     });
     navigate("/login");
   };
+
+  // Check if user is admin (in a real app, this would be based on user role)
+  const isAdmin = user && user.email === "admin@example.com";
 
   return (
     <Sidebar>
@@ -132,6 +135,24 @@ const BookSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/admin">
+                      <Settings />
+                      <span>Manage Books</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {user && (
           <div className="mt-auto border-t p-4">
