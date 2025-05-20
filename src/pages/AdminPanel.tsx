@@ -16,13 +16,16 @@ import {
   Trash2,
   Search,
   BookPlus,
-  Filter
+  Filter,
+  AlertCircle
 } from "lucide-react";
 import { Book } from "@/types/book";
-import { getAllBooks } from "@/services/bookService";
+import { api } from "@/services/api";
 import { AdminBookForm } from "@/components/AdminBookForm";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminPanel = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -30,11 +33,13 @@ const AdminPanel = () => {
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [currentBook, setCurrentBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Check if user is admin (in a real app, this would be based on user role)
+  // Check if user is admin
   useEffect(() => {
     if (!user || user.email !== "admin@example.com") {
       toast({
@@ -46,14 +51,24 @@ const AdminPanel = () => {
     }
   }, [user, navigate, toast]);
 
-  useEffect(() => {
-    const loadBooks = () => {
-      const allBooks = getAllBooks();
-      setBooks(allBooks);
-      setFilteredBooks(allBooks);
-    };
+  const fetchBooks = async () => {
+    setLoading(true);
+    setError(null);
+    
+    const response = await api.getAllBooks();
+    
+    if (response.error) {
+      setError(response.error);
+    } else if (response.data) {
+      setBooks(response.data);
+      setFilteredBooks(response.data);
+    }
+    
+    setLoading(false);
+  };
 
-    loadBooks();
+  useEffect(() => {
+    fetchBooks();
   }, []);
 
   useEffect(() => {
@@ -110,6 +125,10 @@ const AdminPanel = () => {
     setCurrentBook(null);
   };
 
+  const handleRetry = () => {
+    fetchBooks();
+  };
+
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-6">
@@ -122,6 +141,19 @@ const AdminPanel = () => {
           Add New Book
         </Button>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription className="flex flex-col gap-4">
+            <p>{error}</p>
+            <Button onClick={handleRetry} variant="outline" size="sm" className="self-start">
+              Try Again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {isEditing ? (
         <div className="bg-card p-6 rounded-lg shadow-md">
@@ -154,69 +186,90 @@ const AdminPanel = () => {
           </div>
 
           <div className="rounded-lg border bg-card shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cover</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>ISBN</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBooks.map((book) => (
-                  <TableRow key={book.id}>
-                    <TableCell>
-                      <img 
-                        src={book.coverImg} 
-                        alt={`Cover of ${book.title}`} 
-                        className="w-12 h-16 object-cover rounded shadow-sm"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{book.title}</TableCell>
-                    <TableCell>{book.author}</TableCell>
-                    <TableCell>{book.isbn || "N/A"}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        book.status === "available" 
-                          ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" 
-                          : book.status === "borrowed" 
-                          ? "bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                      }`}>
-                        {book.status === "available" ? "Available" : 
-                         book.status === "borrowed" ? "Borrowed" :
-                         book.status === "reading" ? "Reading" :
-                         book.status === "completed" ? "Completed" : 
-                         "Want to Read"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleEditBook(book)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDeleteBook(book.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {loading ? (
+              <div className="p-4">
+                <div className="flex items-center justify-center p-8">
+                  <div className="space-y-4 w-full">
+                    <Skeleton className="h-10 w-full" />
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cover</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead>ISBN</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredBooks.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6">
+                        No books found matching your search criteria.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredBooks.map((book) => (
+                      <TableRow key={book.id}>
+                        <TableCell>
+                          <img 
+                            src={book.coverImg} 
+                            alt={`Cover of ${book.title}`} 
+                            className="w-12 h-16 object-cover rounded shadow-sm"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">{book.title}</TableCell>
+                        <TableCell>{book.author}</TableCell>
+                        <TableCell>{book.isbn || "N/A"}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            book.status === "available" 
+                              ? "bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300" 
+                              : book.status === "borrowed" 
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
+                              : "bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300"
+                          }`}>
+                            {book.status === "available" ? "Available" : 
+                             book.status === "borrowed" ? "Borrowed" :
+                             book.status === "reading" ? "Reading" :
+                             book.status === "completed" ? "Completed" : 
+                             "Want to Read"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleEditBook(book)}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteBook(book.id)}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </>
       )}

@@ -5,12 +5,14 @@ interface AdminBookFormProps {
   onSubmit: (bookData: any) => void;
   initialData?: any;
   buttonText?: string;
+  isSubmitting?: boolean;
 }
 
 export const AdminBookForm = ({
   onSubmit,
   initialData = {},
-  buttonText = "Add Book"
+  buttonText = "Add Book",
+  isSubmitting = false
 }: AdminBookFormProps) => {
   // In a real application, you might want to add admin-specific fields here
   // or additional validation for admin-only operations
@@ -25,6 +27,7 @@ export const AdminBookForm = ({
       onSubmit={handleSubmit}
       initialData={initialData}
       buttonText={buttonText}
+      isSubmitting={isSubmitting}
     />
   );
 };

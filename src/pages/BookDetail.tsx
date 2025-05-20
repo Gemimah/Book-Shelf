@@ -21,53 +21,76 @@ import {
   Calendar,
   ArrowDown,
   Check,
+  AlertCircle,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { getBookById, borrowBook, returnBook } from "@/services/bookService";
+import { api } from "@/services/api";
 import { Book } from "@/types/book";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const BookDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [book, setBook] = useState<Book | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      const foundBook = getBookById(id);
-      setBook(foundBook);
-    }
-  }, [id]);
-
-  const handleBorrow = () => {
+  const fetchBookDetails = async () => {
     if (!id) return;
     
     setLoading(true);
-    const updatedBook = borrowBook(id);
+    setError(null);
     
-    if (updatedBook) {
-      setBook(updatedBook);
-      toast.success("Book borrowed successfully!");
-      toast.info(`Return by: ${format(parseISO(updatedBook.dueDate!), "MMMM dd, yyyy")}`);
-    } else {
-      toast.error("Failed to borrow book");
+    const response = await api.getBookById(id);
+    
+    if (response.error) {
+      setError(response.error);
+    } else if (response.data) {
+      setBook(response.data);
     }
+    
     setLoading(false);
   };
 
-  const handleReturn = () => {
+  useEffect(() => {
+    fetchBookDetails();
+  }, [id]);
+
+  const handleBorrow = async () => {
     if (!id) return;
     
-    setLoading(true);
-    const updatedBook = returnBook(id);
+    setActionLoading(true);
     
-    if (updatedBook) {
-      setBook(updatedBook);
-      toast.success("Book returned successfully!");
-    } else {
-      toast.error("Failed to return book");
+    const response = await api.borrowBook(id);
+    
+    if (response.error) {
+      toast.error(response.error);
+    } else if (response.data) {
+      setBook(response.data);
+      toast.success("Book borrowed successfully!");
+      toast.info(`Return by: ${format(parseISO(response.data.dueDate!), "MMMM dd, yyyy")}`);
     }
-    setLoading(false);
+    
+    setActionLoading(false);
+  };
+
+  const handleReturn = async () => {
+    if (!id) return;
+    
+    setActionLoading(true);
+    
+    const response = await api.returnBook(id);
+    
+    if (response.error) {
+      toast.error(response.error);
+    } else if (response.data) {
+      setBook(response.data);
+      toast.success("Book returned successfully!");
+    }
+    
+    setActionLoading(false);
   };
   
   const handleDelete = () => {
@@ -78,16 +101,122 @@ const BookDetail = () => {
     }
   };
 
+  const handleRetry = () => {
+    fetchBookDetails();
+  };
+
+  if (loading) {
+    return (
+      <div className="container py-8">
+        <div className="mb-4">
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <Card>
+                <Skeleton className="aspect-[2/3] w-full" />
+                <CardFooter className="flex flex-col gap-3 p-4">
+                  <Skeleton className="h-10 w-full" />
+                  <div className="flex w-full justify-between gap-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+          <div className="lg:col-span-2">
+            <div className="space-y-6">
+              <div>
+                <Skeleton className="h-10 w-2/3 mb-2" />
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-6 w-24 mt-4" />
+              </div>
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-24 w-full" />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i}>
+                        <Skeleton className="h-4 w-20 mb-2" />
+                        <Skeleton className="h-4 w-full" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-8">
+        <div className="mb-4">
+          <Link
+            to="/books"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Back to Library
+          </Link>
+        </div>
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription className="flex flex-col gap-4">
+            <p>{error}</p>
+            <Button onClick={handleRetry} variant="outline" size="sm" className="self-start">
+              Try Again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   if (!book) {
-    return <div className="container py-8">Book not found</div>;
+    return (
+      <div className="container py-8">
+        <div className="mb-4">
+          <Link
+            to="/books"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Back to Library
+          </Link>
+        </div>
+        <Alert className="mt-4">
+          <AlertTitle>Book Not Found</AlertTitle>
+          <AlertDescription>
+            Sorry, we couldn't find the book you're looking for.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   const statusColors = {
-    available: "bg-green-100 text-green-800",
-    borrowed: book.isOverdue ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800",
-    reading: "bg-blue-100 text-blue-800",
-    completed: "bg-green-100 text-green-800",
-    wishlist: "bg-amber-100 text-amber-800",
+    available: "bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300",
+    borrowed: book.isOverdue 
+      ? "bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300" 
+      : "bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300",
+    reading: "bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300",
+    completed: "bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300",
+    wishlist: "bg-amber-100 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300",
   };
 
   const statusLabels = {
@@ -133,20 +262,44 @@ const BookDetail = () => {
                   <Button 
                     className="w-full bg-book-amber hover:bg-amber-600" 
                     onClick={handleBorrow}
-                    disabled={loading}
+                    disabled={actionLoading}
                   >
-                    <ArrowDown className="mr-2 h-4 w-4" />
-                    Borrow Book
+                    {actionLoading ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      <>
+                        <ArrowDown className="mr-2 h-4 w-4" />
+                        Borrow Book
+                      </>
+                    )}
                   </Button>
                 ) : book.status === "borrowed" ? (
                   <Button 
                     className="w-full" 
                     variant="outline"
                     onClick={handleReturn}
-                    disabled={loading}
+                    disabled={actionLoading}
                   >
-                    <Check className="mr-2 h-4 w-4" />
-                    Return Book
+                    {actionLoading ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Return Book
+                      </>
+                    )}
                   </Button>
                 ) : null}
                 
