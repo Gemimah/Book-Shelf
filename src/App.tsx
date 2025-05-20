@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
+import BorrowedBooks from "./pages/BorrowedBooks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/books" element={<Library />} />
             <Route path="/books/add" element={<AddBook />} />
+            <Route path="/books/borrowed" element={<BorrowedBooks />} />
             <Route path="/books/:id" element={<BookDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

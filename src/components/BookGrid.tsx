@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import BookCard, { BookProps } from "./BookCard";
+import BookCard from "./BookCard";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,9 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import { Book } from "@/types/book";
 
 interface BookGridProps {
-  books: BookProps[];
+  books: Book[];
   title?: string;
 }
 
@@ -57,6 +58,8 @@ const BookGrid = ({ books, title }: BookGridProps) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Books</SelectItem>
+            <SelectItem value="available">Available</SelectItem>
+            <SelectItem value="borrowed">Borrowed</SelectItem>
             <SelectItem value="reading">Currently Reading</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="wishlist">Want to Read</SelectItem>

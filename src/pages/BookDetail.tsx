@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,50 +18,58 @@ import {
   Trash,
   BookCheck,
   BookPlus,
-  Book,
+  Calendar,
+  ArrowDown,
+  Check,
 } from "lucide-react";
-
-// Mock book data - in a real app, this would come from an API
-const mockBook = {
-  id: "1",
-  title: "The Midnight Library",
-  author: "Matt Haig",
-  coverImg: "https://images.unsplash.com/photo-1544947950-fa07a98d237f",
-  status: "reading" as const,
-  progress: 45,
-  isbn: "9780525559474",
-  genre: "Fiction, Fantasy, Contemporary",
-  publisher: "Viking",
-  publishedYear: "2020",
-  pages: "304",
-  description:
-    "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices... Would you have done anything different, if you had the chance to undo your regrets?",
-};
+import { format, parseISO } from "date-fns";
+import { getBookById, borrowBook, returnBook } from "@/services/bookService";
+import { Book } from "@/types/book";
 
 const BookDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  // In a real app, you would fetch the book data based on the ID
-  const [book] = useState(mockBook);
+  const [book, setBook] = useState<Book | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
 
-  const statusColors = {
-    reading: "bg-blue-100 text-blue-800",
-    completed: "bg-green-100 text-green-800",
-    wishlist: "bg-amber-100 text-amber-800",
+  useEffect(() => {
+    if (id) {
+      const foundBook = getBookById(id);
+      setBook(foundBook);
+    }
+  }, [id]);
+
+  const handleBorrow = () => {
+    if (!id) return;
+    
+    setLoading(true);
+    const updatedBook = borrowBook(id);
+    
+    if (updatedBook) {
+      setBook(updatedBook);
+      toast.success("Book borrowed successfully!");
+      toast.info(`Return by: ${format(parseISO(updatedBook.dueDate!), "MMMM dd, yyyy")}`);
+    } else {
+      toast.error("Failed to borrow book");
+    }
+    setLoading(false);
   };
 
-  const statusLabels = {
-    reading: "Currently Reading",
-    completed: "Completed",
-    wishlist: "Want to Read",
+  const handleReturn = () => {
+    if (!id) return;
+    
+    setLoading(true);
+    const updatedBook = returnBook(id);
+    
+    if (updatedBook) {
+      setBook(updatedBook);
+      toast.success("Book returned successfully!");
+    } else {
+      toast.error("Failed to return book");
+    }
+    setLoading(false);
   };
-
-  const statusIcons = {
-    reading: <BookOpen className="h-4 w-4 mr-1" />,
-    completed: <BookCheck className="h-4 w-4 mr-1" />,
-    wishlist: <BookPlus className="h-4 w-4 mr-1" />,
-  };
-
+  
   const handleDelete = () => {
     if (window.confirm("Are you sure you want to delete this book?")) {
       console.log("Deleting book:", id);
@@ -72,6 +81,30 @@ const BookDetail = () => {
   if (!book) {
     return <div className="container py-8">Book not found</div>;
   }
+
+  const statusColors = {
+    available: "bg-green-100 text-green-800",
+    borrowed: book.isOverdue ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800",
+    reading: "bg-blue-100 text-blue-800",
+    completed: "bg-green-100 text-green-800",
+    wishlist: "bg-amber-100 text-amber-800",
+  };
+
+  const statusLabels = {
+    available: "Available",
+    borrowed: book.isOverdue ? "Overdue" : "Borrowed",
+    reading: "Currently Reading",
+    completed: "Completed",
+    wishlist: "Want to Read",
+  };
+
+  const statusIcons = {
+    available: <BookPlus className="h-4 w-4 mr-1" />,
+    borrowed: <Calendar className="h-4 w-4 mr-1" />,
+    reading: <BookOpen className="h-4 w-4 mr-1" />,
+    completed: <BookCheck className="h-4 w-4 mr-1" />,
+    wishlist: <BookPlus className="h-4 w-4 mr-1" />,
+  };
 
   return (
     <div className="container py-8">
@@ -95,17 +128,40 @@ const BookDetail = () => {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               </div>
-              <CardFooter className="flex justify-between p-4">
-                <Button variant="outline" asChild>
-                  <Link to={`/books/${id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Link>
-                </Button>
-                <Button variant="destructive" onClick={handleDelete}>
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
+              <CardFooter className="flex flex-col gap-3 p-4">
+                {book.status === "available" ? (
+                  <Button 
+                    className="w-full bg-book-amber hover:bg-amber-600" 
+                    onClick={handleBorrow}
+                    disabled={loading}
+                  >
+                    <ArrowDown className="mr-2 h-4 w-4" />
+                    Borrow Book
+                  </Button>
+                ) : book.status === "borrowed" ? (
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={handleReturn}
+                    disabled={loading}
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Return Book
+                  </Button>
+                ) : null}
+                
+                <div className="flex w-full justify-between gap-2">
+                  <Button variant="outline" asChild className="flex-1">
+                    <Link to={`/books/${id}/edit`}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Link>
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete} className="flex-1">
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           </div>
@@ -127,7 +183,43 @@ const BookDetail = () => {
               </div>
             </div>
 
-            {book.status === "reading" && (
+            {book.status === "borrowed" && book.dueDate && (
+              <Card className={book.isOverdue ? "border-red-200 bg-red-50" : ""}>
+                <CardHeader className="pb-2">
+                  <CardTitle className={`text-lg ${book.isOverdue ? "text-red-700" : ""}`}>
+                    {book.isOverdue ? "Book Overdue" : "Borrowing Information"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Borrowed Date:</span>
+                      <span>{format(new Date(book.borrowedDate!), "MMMM dd, yyyy")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Due Date:</span>
+                      <span className={book.isOverdue ? "text-red-600 font-semibold" : ""}>
+                        {format(new Date(book.dueDate), "MMMM dd, yyyy")}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+                {book.isOverdue && (
+                  <CardFooter>
+                    <Button 
+                      className="w-full"
+                      onClick={handleReturn}
+                      disabled={loading}
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Return Book Now
+                    </Button>
+                  </CardFooter>
+                )}
+              </Card>
+            )}
+            
+            {book.status === "reading" && book.progress !== undefined && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">Reading Progress</CardTitle>

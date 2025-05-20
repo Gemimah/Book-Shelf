@@ -2,24 +2,36 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { format, isAfter } from "date-fns";
+import { Book } from "@/types/book";
 
-export interface BookProps {
-  id: string;
-  title: string;
-  author: string;
-  coverImg: string;
-  status: "reading" | "completed" | "wishlist";
-  progress?: number;
+interface BookCardProps extends Book {
+  showProgress?: boolean;
 }
 
-const BookCard = ({ id, title, author, coverImg, status, progress }: BookProps) => {
+const BookCard = ({ 
+  id, 
+  title, 
+  author, 
+  coverImg, 
+  status, 
+  progress,
+  borrowedDate,
+  dueDate,
+  isOverdue,
+  showProgress = true
+}: BookCardProps) => {
   const statusColors = {
+    available: "bg-green-100 text-green-800",
+    borrowed: isOverdue ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800",
     reading: "bg-blue-100 text-blue-800",
     completed: "bg-green-100 text-green-800",
     wishlist: "bg-amber-100 text-amber-800",
   };
 
   const statusLabels = {
+    available: "Available",
+    borrowed: isOverdue ? "Overdue" : "Borrowed",
     reading: "Reading",
     completed: "Completed",
     wishlist: "Want to Read",
@@ -44,8 +56,17 @@ const BookCard = ({ id, title, author, coverImg, status, progress }: BookProps) 
         <CardContent className="flex flex-col flex-grow p-4">
           <h3 className="font-serif font-bold text-lg line-clamp-2 mb-1">{title}</h3>
           <p className="text-muted-foreground text-sm">{author}</p>
+          
+          {status === "borrowed" && dueDate && (
+            <div className="mt-2 text-xs">
+              <p className={`font-medium ${isOverdue ? "text-red-600" : "text-muted-foreground"}`}>
+                Due: {format(new Date(dueDate), "MMM dd, yyyy")}
+              </p>
+            </div>
+          )}
         </CardContent>
-        {status === "reading" && progress !== undefined && (
+        
+        {status === "reading" && progress !== undefined && showProgress && (
           <CardFooter className="p-4 pt-0">
             <div className="w-full">
               <div className="flex justify-between text-xs mb-1">
