@@ -1,4 +1,3 @@
-
 import { Book } from "../types/book";
 import { addDays, format, isAfter } from "date-fns";
 
@@ -116,7 +115,7 @@ let mockBooks: Book[] = [
     author: "Frank Herbert",
     coverImg: "https://images.unsplash.com/photo-1532012197267-da84d127e765",
     status: "available",
-    description: "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, heir to a noble family tasked with ruling an inhospitable world where the only thing of value is the "spice" melange.",
+    description: "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, heir to a noble family tasked with ruling an inhospitable world where the only thing of value is the 'spice' melange.",
     isbn: "9780441172719",
     genre: "Science Fiction",
     publisher: "Ace Books",
