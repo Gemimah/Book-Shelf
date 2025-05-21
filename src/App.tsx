@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Admin route component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -48,8 +48,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
   
-  // Check if user is admin (in a real app, this would be based on user role)
-  if (user.email !== "admin@example.com") {
+  // Check if user is admin
+  if (!isAdmin) {
     return <Navigate to="/dashboard" />;
   }
   

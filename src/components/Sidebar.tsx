@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import { BookOpen, Book, BookPlus, BookType, BookCheck, LogOut, User, Calendar, Settings } from "lucide-react";
+import { BookOpen, Book, BookPlus, BookType, BookCheck, LogOut, User, Calendar, Settings, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export const SidebarWrapper = ({ children }: SidebarWrapperProps) => {
 };
 
 const BookSidebar = () => {
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -54,13 +54,10 @@ const BookSidebar = () => {
     navigate("/login");
   };
 
-  // Check if user is admin (in a real app, this would be based on user role)
-  const isAdmin = user && user.email === "admin@example.com";
-
   return (
     <Sidebar>
-      <SidebarContent>
-        <div className="flex h-14 items-center justify-between border-b px-4">
+      <SidebarContent className="bg-gradient-to-b from-sidebar to-sidebar-accent">
+        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <Link to="/" className="flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-sidebar-primary" />
             <span className="font-serif font-bold text-xl text-sidebar-foreground">
@@ -71,30 +68,35 @@ const BookSidebar = () => {
         </div>
 
         {user ? (
-          <div className="py-4 px-4 border-b flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-sidebar-accent flex items-center justify-center">
+          <div className="py-4 px-4 border-b border-sidebar-border flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-sidebar-accent flex items-center justify-center ring-2 ring-sidebar-primary/30">
               <User className="h-5 w-5 text-sidebar-primary" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sidebar-foreground">{user.name}</p>
               <p className="text-xs text-sidebar-foreground/70">{user.email}</p>
+              {isAdmin && (
+                <span className="inline-flex items-center mt-1 bg-sidebar-primary/20 text-sidebar-primary text-xs px-1.5 py-0.5 rounded">
+                  <Shield className="h-3 w-3 mr-1" /> Admin
+                </span>
+              )}
             </div>
           </div>
         ) : (
-          <div className="py-4 px-4 border-b">
+          <div className="py-4 px-4 border-b border-sidebar-border">
             <Link to="/login">
-              <Button variant="outline" className="w-full">Log In</Button>
+              <Button variant="outline" className="w-full bg-sidebar-accent text-sidebar-foreground border-sidebar-border">Log In</Button>
             </Link>
           </div>
         )}
 
         <SidebarGroup>
-          <SidebarGroupLabel>My Books</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/80">My Books</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/dashboard">
+                  <Link to="/dashboard" className="text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent/80">
                     <Book />
                     <span>Dashboard</span>
                   </Link>
@@ -102,7 +104,7 @@ const BookSidebar = () => {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/books">
+                  <Link to="/books" className="text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent/80">
                     <BookType />
                     <span>Library</span>
                   </Link>
@@ -110,7 +112,7 @@ const BookSidebar = () => {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/books/borrowed">
+                  <Link to="/books/borrowed" className="text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent/80">
                     <Calendar />
                     <span>Borrowed Books</span>
                   </Link>
@@ -118,7 +120,7 @@ const BookSidebar = () => {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/books/reading">
+                  <Link to="/books/reading" className="text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent/80">
                     <BookCheck />
                     <span>Currently Reading</span>
                   </Link>
@@ -126,7 +128,7 @@ const BookSidebar = () => {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/books/add">
+                  <Link to="/books/add" className="text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent/80">
                     <BookPlus />
                     <span>Add New Book</span>
                   </Link>
@@ -138,14 +140,14 @@ const BookSidebar = () => {
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground/80">Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link to="/admin">
-                      <Settings />
-                      <span>Manage Books</span>
+                    <Link to="/admin" className="text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent/80">
+                      <Settings className="text-sidebar-primary" />
+                      <span>Admin Dashboard</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -155,7 +157,7 @@ const BookSidebar = () => {
         )}
 
         {user && (
-          <div className="mt-auto border-t p-4">
+          <div className="mt-auto border-t border-sidebar-border p-4">
             <Button 
               variant="ghost" 
               className="w-full justify-start text-sidebar-foreground hover:text-sidebar-primary hover:bg-sidebar-accent"
