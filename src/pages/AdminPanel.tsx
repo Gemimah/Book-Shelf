@@ -4,10 +4,16 @@ import { AdminDashboard } from "@/components/AdminDashboard";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminBookForm } from "@/components/AdminBookForm";
-import { BookSearch, UsersRound, Settings, LayoutDashboard } from "lucide-react";
+import { BookUser, UsersRound, Settings, LayoutDashboard } from "lucide-react";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Handler for adding new book
+  const handleAddBook = (bookData: any) => {
+    console.log("Adding new book:", bookData);
+    // Here you would typically make an API call to save the new book
+  };
 
   return (
     <div className="container py-8">
@@ -31,7 +37,7 @@ const AdminPanel = () => {
               value="books"
               className="flex items-center data-[state=active]:bg-gradient-to-br data-[state=active]:from-teal-200/50 data-[state=active]:to-teal-100/50 dark:data-[state=active]:from-teal-900/40 dark:data-[state=active]:to-teal-800/20 py-2"
             >
-              <BookSearch className="h-4 w-4 mr-2" />
+              <BookUser className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Books</span>
               <span className="sm:hidden">Books</span>
             </TabsTrigger>
@@ -64,7 +70,7 @@ const AdminPanel = () => {
               <h2 className="text-2xl font-serif font-bold">Manage Books</h2>
               <Button className="bg-book-amber hover:bg-amber-600">Add New Book</Button>
             </div>
-            <AdminBookForm />
+            <AdminBookForm onSubmit={handleAddBook} />
           </div>
         </TabsContent>
 
