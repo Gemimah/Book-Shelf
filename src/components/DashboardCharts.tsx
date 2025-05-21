@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from "@/components/ui/chart";
 import { Book, BookOpen } from "lucide-react";
 
@@ -90,13 +90,28 @@ export const MonthlyActivityChart = () => {
       <CardContent>
         <div className="h-[300px]">
           <ChartContainer config={config}>
-            <BarChart data={data}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis dataKey="month" />
               <YAxis />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="borrowed" fill={config.borrowed.color} name="borrowed" />
-              <Bar dataKey="returned" fill={config.returned.color} name="returned" />
-            </BarChart>
+              <Line 
+                type="monotone" 
+                dataKey="borrowed" 
+                stroke={config.borrowed.color} 
+                name="borrowed" 
+                strokeWidth={2}
+                activeDot={{ r: 8 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="returned" 
+                stroke={config.returned.color} 
+                name="returned" 
+                strokeWidth={2}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
           </ChartContainer>
         </div>
       </CardContent>
