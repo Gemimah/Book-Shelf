@@ -424,6 +424,6 @@ export const getBookStatistics = () => {
     overdue: overdue.length,
     reading: allBooks.filter(book => book.status === "reading").length,
     completed: allBooks.filter(book => book.status === "completed").length,
-    wishlist: allBooks.filter(book => book.status === "wishlist").length,
+    wishlist: allBooks.filter(book => book.status === "wishlist").length
   };
 };
